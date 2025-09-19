@@ -1,9 +1,9 @@
 <?php
 
+use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\PetugasController;
 use App\Http\Controllers\AuthController;
-
 
 // Login & Logout
 Route::get('/login', [AuthController::class, 'loginForm'])->name('login');
@@ -14,6 +14,8 @@ Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 // Dashboard Admin
 // ============================
 Route::middleware(['auth', 'role:admin'])->group(function () {
+
+    // Dashboard
     Route::get('/admin/dashboard', [AdminController::class, 'index'])->name('admin.dashboard');
 
     // Manajemen Petugas
@@ -40,18 +42,15 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
     Route::get('/admin/bookings/{booking}/edit', [AdminController::class, 'editBooking'])->name('admin.bookings.edit');
     Route::put('/admin/bookings/{booking}', [AdminController::class, 'updateBooking'])->name('admin.bookings.update');
     Route::delete('/admin/bookings/{booking}', [AdminController::class, 'deleteBooking'])->name('admin.bookings.delete');
-});
-  
-   // Manajemen Jadwal Ruang (Admin Only)
-Route::middleware(['auth', 'role:admin'])->group(function () {
-    Route::get('/admin/schedules', [AdminController::class, 'schedules'])->name('admin.schedules');
-    Route::get('/admin/schedules/create', [AdminController::class, 'createSchedule'])->name('admin.schedules.create');
-    Route::post('/admin/schedules', [AdminController::class, 'storeSchedule'])->name('admin.schedules.store');
-    Route::get('/admin/schedules/{schedule}/edit', [AdminController::class, 'editSchedule'])->name('admin.schedules.edit');
-    Route::put('/admin/schedules/{schedule}', [AdminController::class, 'updateSchedule'])->name('admin.schedules.update');
-    Route::delete('/admin/schedules/{schedule}', [AdminController::class, 'deleteSchedule'])->name('admin.schedules.delete');
-});
 
+    // Manajemen Jadwal Reguler
+    Route::get('/admin/jadwal_reguler', [AdminController::class, 'jadwalReguler'])->name('admin.jadwal_reguler');
+    Route::get('/admin/jadwal_reguler/create', [AdminController::class, 'createJadwalReguler'])->name('admin.jadwal_reguler.create');
+    Route::post('/admin/jadwal_reguler', [AdminController::class, 'storeJadwalReguler'])->name('admin.jadwal_reguler.store');
+    Route::get('/admin/jadwal_reguler/{jadwal}/edit', [AdminController::class, 'editJadwalReguler'])->name('admin.jadwal_reguler.edit');
+    Route::put('/admin/jadwal_reguler/{jadwal}', [AdminController::class, 'updateJadwalReguler'])->name('admin.jadwal_reguler.update');
+    Route::delete('/admin/jadwal_reguler/{jadwal}', [AdminController::class, 'deleteJadwalReguler'])->name('admin.jadwal_reguler.delete');
+});
 
 // ============================
 // Dashboard Petugas

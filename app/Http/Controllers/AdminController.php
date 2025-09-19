@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use App\Models\User;
 use App\Models\Room;
 use App\Models\Booking;
+use App\Models\JadwalReguler;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
 
@@ -16,11 +17,12 @@ class AdminController extends Controller
     // ============================
     public function index()
     {
-        $usersCount    = User::count();
-        $roomsCount    = Room::count();
-        $bookingsCount = Booking::count();
+        $usersCount     = User::count();
+        $roomsCount     = Room::count();
+        $bookingsCount  = Booking::count();
+        $jadwalCount    = JadwalReguler::count();
 
-        return view('admin.dashboard', compact('usersCount', 'roomsCount', 'bookingsCount'));
+        return view('admin.dashboard', compact('usersCount', 'roomsCount', 'bookingsCount', 'jadwalCount'));
     }
 
     // ============================
@@ -68,12 +70,11 @@ class AdminController extends Controller
             'password' => 'nullable|string|min:6',
         ]);
 
-        $user->name = $request->name;
-        $user->email = $request->email;
-        if ($request->password) {
-            $user->password = Hash::make($request->password);
-        }
-        $user->save();
+        $user->update([
+            'name'  => $request->name,
+            'email' => $request->email,
+            'password' => $request->password ? Hash::make($request->password) : $user->password,
+        ]);
 
         return redirect()->route('admin.petugas')->with('success', 'Petugas berhasil diperbarui.');
     }
@@ -101,8 +102,8 @@ class AdminController extends Controller
     public function storeRoom(Request $request)
     {
         $request->validate([
-            'name' => 'required|string|max:255',
-            'capacity' => 'required|integer|min:1',
+            'name'        => 'required|string|max:255',
+            'capacity'    => 'required|integer|min:1',
             'description' => 'nullable|string',
         ]);
 
@@ -119,8 +120,8 @@ class AdminController extends Controller
     public function updateRoom(Request $request, Room $room)
     {
         $request->validate([
-            'name' => 'required|string|max:255',
-            'capacity' => 'required|integer|min:1',
+            'name'        => 'required|string|max:255',
+            'capacity'    => 'required|integer|min:1',
             'description' => 'nullable|string',
         ]);
 
@@ -136,86 +137,96 @@ class AdminController extends Controller
     }
 
     // ============================
-// Manajemen Jadwal Ruang
-// ============================
-public function schedules()
-{
-    $schedules = \App\Models\Schedule::with('room')->get();
-    return view('admin.schedules.index', compact('schedules'));
-}
+    // Manajemen Jadwal Reguler
+    // ============================
+    public function jadwalReguler()
+    {
+        $jadwal = JadwalReguler::with('room')->get(); // ambil semua jadwal dengan room
+        return view('admin.jadwal_reguler.index', compact('jadwal'));
+    }
 
-public function createSchedule()
-{
-    $rooms = Room::all();
-    return view('admin.schedules.create', compact('rooms'));
-}
+    public function createJadwalReguler()
+    {
+        $rooms = Room::all();
+        return view('admin.jadwal_reguler.create', compact('rooms'));
+    }
 
-public function storeSchedule(Request $request)
-{
-    $request->validate([
-        'id_room' => 'required|exists:rooms,id_room',
-        'tanggal_mulai' => 'required|date',
-        'tanggal_selesai' => 'required|date|after:tanggal_mulai',
-        'keterangan' => 'nullable|string'
-    ]);
+    public function storeJadwalReguler(Request $request)
+    {
+        $request->validate([
+            'room_id'     => 'required|exists:rooms,id',
+            'hari'        => 'required|string',
+            'start_time'  => 'required|date_format:H:i',
+            'end_time'    => 'required|date_format:H:i|after:start_time',
+            'keterangan'  => 'nullable|string'
+        ]);
 
-    \App\Models\Schedule::create($request->all());
+        JadwalReguler::create([
+            'room_id'    => $request->room_id,
+            'hari'       => $request->hari,
+            'start_time' => $request->start_time,
+            'end_time'   => $request->end_time,
+            'keterangan' => $request->keterangan,
+        ]);
 
-    return redirect()->route('admin.schedules')->with('success', 'Jadwal berhasil ditambahkan.');
-}
+        return redirect()->route('admin.jadwal_reguler')->with('success', 'Jadwal berhasil ditambahkan.');
+    }
 
-public function editSchedule(\App\Models\Schedule $schedule)
-{
-    $rooms = Room::all();
-    return view('admin.schedules.edit', compact('schedule', 'rooms'));
-}
+    public function editJadwalReguler(JadwalReguler $jadwal)
+    {
+        $rooms = Room::all();
+        return view('admin.jadwal_reguler.edit', compact('jadwal', 'rooms'));
+    }
 
-public function updateSchedule(Request $request, \App\Models\Schedule $schedule)
-{
-    $request->validate([
-        'id_room' => 'required|exists:rooms,id_room',
-        'tanggal_mulai' => 'required|date',
-        'tanggal_selesai' => 'required|date|after:tanggal_mulai',
-        'keterangan' => 'nullable|string'
-    ]);
+    public function updateJadwalReguler(Request $request, JadwalReguler $jadwal)
+    {
+        $request->validate([
+            'room_id'     => 'required|exists:rooms,id',
+            'hari'        => 'required|string',
+            'start_time'  => 'required|date_format:H:i',
+            'end_time'    => 'required|date_format:H:i|after:start_time',
+            'keterangan'  => 'nullable|string'
+        ]);
 
-    $schedule->update($request->all());
+        $jadwal->update([
+            'room_id'    => $request->room_id,
+            'hari'       => $request->hari,
+            'start_time' => $request->start_time,
+            'end_time'   => $request->end_time,
+            'keterangan' => $request->keterangan,
+        ]);
 
-    return redirect()->route('admin.schedules')->with('success', 'Jadwal berhasil diperbarui.');
-}
+        return redirect()->route('admin.jadwal_reguler')->with('success', 'Jadwal berhasil diperbarui.');
+    }
 
-public function deleteSchedule(\App\Models\Schedule $schedule)
-{
-    $schedule->delete();
-    return redirect()->route('admin.schedules')->with('success', 'Jadwal berhasil dihapus.');
-}
+    public function deleteJadwalReguler(JadwalReguler $jadwal)
+    {
+        $jadwal->delete();
+        return redirect()->route('admin.jadwal_reguler')->with('success', 'Jadwal berhasil dihapus.');
+    }
 
     // ============================
     // Manajemen Booking
     // ============================
-    // List semua booking
     public function bookings()
     {
         $bookings = Booking::with(['user', 'room'])->orderBy('created_at', 'desc')->get();
         return view('admin.bookings.index', compact('bookings'));
     }
 
-    // Detail booking
     public function showBooking(Booking $booking)
     {
-        $booking->load(['user','room']);
+        $booking->load(['user', 'room']);
         return view('admin.bookings.show', compact('booking'));
     }
 
-    // Form create booking
     public function createBooking()
     {
         $users = User::all();
         $rooms = Room::all();
-        return view('admin.bookings.create', compact('users','rooms'));
+        return view('admin.bookings.create', compact('users', 'rooms'));
     }
 
-    // Store booking
     public function storeBooking(Request $request)
     {
         $request->validate([
@@ -224,23 +235,21 @@ public function deleteSchedule(\App\Models\Schedule $schedule)
             'start_time' => 'required|date',
             'end_time'   => 'required|date|after:start_time',
             'purpose'    => 'nullable|string|max:500',
-            'status'     => ['required', Rule::in(['pending','approved','rejected'])],
+            'status'     => ['required', Rule::in(['pending', 'approved', 'rejected'])],
         ]);
 
-        Booking::create($request->only('user_id','room_id','start_time','end_time','purpose','status'));
+        Booking::create($request->only('user_id', 'room_id', 'start_time', 'end_time', 'purpose', 'status'));
 
         return redirect()->route('admin.bookings')->with('success', 'Booking berhasil dibuat.');
     }
 
-    // Form edit booking
     public function editBooking(Booking $booking)
     {
         $users = User::all();
         $rooms = Room::all();
-        return view('admin.bookings.edit', compact('booking','users','rooms'));
+        return view('admin.bookings.edit', compact('booking', 'users', 'rooms'));
     }
 
-    // Update booking
     public function updateBooking(Request $request, Booking $booking)
     {
         $request->validate([
@@ -249,15 +258,14 @@ public function deleteSchedule(\App\Models\Schedule $schedule)
             'start_time' => 'required|date',
             'end_time'   => 'required|date|after:start_time',
             'purpose'    => 'nullable|string|max:500',
-            'status'     => ['required', Rule::in(['pending','approved','rejected'])],
+            'status'     => ['required', Rule::in(['pending', 'approved', 'rejected'])],
         ]);
 
-        $booking->update($request->only('user_id','room_id','start_time','end_time','purpose','status'));
+        $booking->update($request->only('user_id', 'room_id', 'start_time', 'end_time', 'purpose', 'status'));
 
         return redirect()->route('admin.bookings')->with('success', 'Booking berhasil diperbarui.');
     }
 
-    // Hapus booking
     public function deleteBooking(Booking $booking)
     {
         $booking->delete();

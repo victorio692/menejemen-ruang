@@ -11,17 +11,18 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('jadwal_regular', function (Blueprint $table) {
-            $table->id();
+        Schema::create('jadwal_regulers', function (Blueprint $table) {
+            $table->id('id_reguler');
+            $table->string('nama_reguler');
             $table->unsignedBigInteger('id_room');
-            $table->string('hari');
-            $table->time('jam_mulai');
-            $table->time('jam_selesai');
-            $table->string('keterangan')->nullable();
+            $table->unsignedBigInteger('id_user');
             $table->timestamps();
 
-            // Kalau ada tabel rooms, tambahkan foreign key
-            // $table->foreign('id_room')->references('id')->on('rooms')->onDelete('cascade');
+            // Relasi ke tabel rooms
+            $table->foreign('id_room')->references('id')->on('rooms')->onDelete('cascade');
+
+            // Relasi ke tabel users
+            $table->foreign('id_user')->references('id')->on('users')->onDelete('cascade');
         });
     }
 
@@ -30,6 +31,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('jadwal_regular');
+        Schema::dropIfExists('jadwal_regulers');
     }
 };
