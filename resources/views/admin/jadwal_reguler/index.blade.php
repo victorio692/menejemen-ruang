@@ -6,6 +6,7 @@
     <div class="container">
         <h3 class="mb-4">Manajemen Jadwal Reguler</h3>
 
+          <a href="{{ route('admin.dashboard') }}" class="btn btn-secondary mb-3">Kembali</a>
         <a href="{{ route('admin.jadwal_reguler.create') }}" class="btn btn-success mb-3">Tambah Jadwal</a>
 
         @if (session('success'))

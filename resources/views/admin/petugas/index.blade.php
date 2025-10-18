@@ -4,9 +4,13 @@
 
 @section('content')
 <div class="container">
-    <h3 class="mb-4">Manajemen Petugas</h3>
+    <h3 class="mb-4">Manajemen User</h3>
 
-    <a href="{{ route('admin.petugas.create') }}" class="btn btn-success mb-3">Tambah Petugas</a>
+    <!-- Tombol kembali -->
+    <a href="{{ route('admin.dashboard') }}" class="btn btn-secondary mb-3">Kembali</a>
+
+    <!-- Tombol tambah petugas -->
+    <a href="{{ route('admin.petugas.create') }}" class="btn btn-success mb-3 ms-2">Tambah Petugas</a>
 
     @if(session('success'))
         <div class="alert alert-success">{{ session('success') }}</div>

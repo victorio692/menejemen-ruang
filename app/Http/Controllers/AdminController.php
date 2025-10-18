@@ -12,22 +12,26 @@ use Illuminate\Validation\Rule;
 
 class AdminController extends Controller
 {
-    // ============================
-    // Dashboard Admin
-    // ============================
-    public function index()
-    {
-        $usersCount     = User::count();
-        $roomsCount     = Room::count();
-        $bookingsCount  = Booking::count();
-        $jadwalCount    = JadwalReguler::count();
+  
+public function index()
+{
+    $usersCount      = User::count();
+    $roomsCount      = Room::count();
+    $bookingsCount   = Booking::count();
+    $pendingBookings = Booking::where('status', 'pending')->count(); // pending bookings
+    $jadwalCount     = JadwalReguler::count();
 
-        return view('admin.dashboard', compact('usersCount', 'roomsCount', 'bookingsCount', 'jadwalCount'));
-    }
+    return view('admin.dashboard', compact(
+        'usersCount',
+        'roomsCount',
+        'bookingsCount',
+        'pendingBookings',
+        'jadwalCount'
+    ));
+}
 
-    // ============================
-    // Manajemen Petugas
-    // ============================
+
+    
     public function petugas()
     {
         $petugas = User::where('role', 'petugas')->get();
@@ -85,9 +89,7 @@ class AdminController extends Controller
         return redirect()->route('admin.petugas')->with('success', 'Petugas berhasil dihapus.');
     }
 
-    // ============================
-    // Manajemen Room
-    // ============================
+    
     public function rooms()
     {
         $rooms = Room::all();
@@ -136,78 +138,90 @@ class AdminController extends Controller
         return redirect()->route('admin.rooms')->with('success', 'Room berhasil dihapus.');
     }
 
-    // ============================
-    // Manajemen Jadwal Reguler
-    // ============================
-    public function jadwalReguler()
-    {
-        $jadwal = JadwalReguler::with('room')->get(); // ambil semua jadwal dengan room
-        return view('admin.jadwal_reguler.index', compact('jadwal'));
+  
+
+
+
+public function jadwalReguler()
+{
+    $jadwal = JadwalReguler::with('room')->get();
+    return view('admin.jadwal_reguler.index', compact('jadwal'));
+}
+
+
+public function createJadwalReguler()
+{
+    $rooms = Room::all();
+
+    if ($rooms->isEmpty()) {
+        return redirect()->route('admin.jadwal_reguler')
+                         ->with('error', 'Belum ada room. Tambahkan room terlebih dahulu.');
     }
 
-    public function createJadwalReguler()
-    {
-        $rooms = Room::all();
-        return view('admin.jadwal_reguler.create', compact('rooms'));
-    }
+    return view('admin.jadwal_reguler.create', compact('rooms'));
+}
 
-    public function storeJadwalReguler(Request $request)
-    {
-        $request->validate([
-            'room_id'     => 'required|exists:rooms,id',
-            'hari'        => 'required|string',
-            'start_time'  => 'required|date_format:H:i',
-            'end_time'    => 'required|date_format:H:i|after:start_time',
-            'keterangan'  => 'nullable|string'
-        ]);
+public function storeJadwalReguler(Request $request)
+{
+    $request->validate([
+        'room_id'     => 'required|exists:rooms,id',
+        'hari'        => 'required|string',
+        'start_time'  => 'required|date_format:H:i',
+        'end_time'    => 'required|date_format:H:i|after:start_time',
+        'keterangan'  => 'nullable|string'
+    ]);
 
-        JadwalReguler::create([
-            'room_id'    => $request->room_id,
-            'hari'       => $request->hari,
-            'start_time' => $request->start_time,
-            'end_time'   => $request->end_time,
-            'keterangan' => $request->keterangan,
-        ]);
+    JadwalReguler::create([
+        'room_id'    => $request->room_id,
+        'hari'       => $request->hari,
+        'start_time' => $request->start_time,
+        'end_time'   => $request->end_time,
+        'keterangan' => $request->keterangan,
+    ]);
 
-        return redirect()->route('admin.jadwal_reguler')->with('success', 'Jadwal berhasil ditambahkan.');
-    }
+    return redirect()->route('admin.jadwal_reguler')
+                     ->with('success', 'Jadwal berhasil ditambahkan.');
+}
 
-    public function editJadwalReguler(JadwalReguler $jadwal)
-    {
-        $rooms = Room::all();
-        return view('admin.jadwal_reguler.edit', compact('jadwal', 'rooms'));
-    }
 
-    public function updateJadwalReguler(Request $request, JadwalReguler $jadwal)
-    {
-        $request->validate([
-            'room_id'     => 'required|exists:rooms,id',
-            'hari'        => 'required|string',
-            'start_time'  => 'required|date_format:H:i',
-            'end_time'    => 'required|date_format:H:i|after:start_time',
-            'keterangan'  => 'nullable|string'
-        ]);
+public function editJadwalReguler(JadwalReguler $jadwal)
+{
+    $rooms = Room::all();
+    return view('admin.jadwal_reguler.edit', compact('jadwal', 'rooms'));
+}
 
-        $jadwal->update([
-            'room_id'    => $request->room_id,
-            'hari'       => $request->hari,
-            'start_time' => $request->start_time,
-            'end_time'   => $request->end_time,
-            'keterangan' => $request->keterangan,
-        ]);
+public function updateJadwalReguler(Request $request, JadwalReguler $jadwal)
+{
+    $request->validate([
+        'room_id'     => 'required|exists:rooms,id',
+        'hari'        => 'required|string',
+        'start_time'  => 'required|date_format:H:i',
+        'end_time'    => 'required|date_format:H:i|after:start_time',
+        'keterangan'  => 'nullable|string'
+    ]);
 
-        return redirect()->route('admin.jadwal_reguler')->with('success', 'Jadwal berhasil diperbarui.');
-    }
+    $jadwal->update([
+        'room_id'    => $request->room_id,
+        'hari'       => $request->hari,
+        'start_time' => $request->start_time,
+        'end_time'   => $request->end_time,
+        'keterangan' => $request->keterangan,
+    ]);
 
-    public function deleteJadwalReguler(JadwalReguler $jadwal)
-    {
-        $jadwal->delete();
-        return redirect()->route('admin.jadwal_reguler')->with('success', 'Jadwal berhasil dihapus.');
-    }
+    return redirect()->route('admin.jadwal_reguler')
+                     ->with('success', 'Jadwal berhasil diperbarui.');
+}
 
-    // ============================
+public function deleteJadwalReguler(JadwalReguler $jadwal)
+{
+    $jadwal->delete();
+    return redirect()->route('admin.jadwal_reguler')
+                     ->with('success', 'Jadwal berhasil dihapus.');
+}
+
+
+    
     // Manajemen Booking
-    // ============================
     public function bookings()
     {
         $bookings = Booking::with(['user', 'room'])->orderBy('created_at', 'desc')->get();

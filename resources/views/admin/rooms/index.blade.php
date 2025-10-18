@@ -6,6 +6,8 @@
 <div class="container">
     <h3 class="mb-4">Manajemen Room</h3>
 
+  <a href="{{ route('admin.dashboard') }}" class="btn btn-secondary mb-3">Kembali</a>
+
     <a href="{{ route('admin.rooms.create') }}" class="btn btn-success mb-3">Tambah Room</a>
 
     @if(session('success'))

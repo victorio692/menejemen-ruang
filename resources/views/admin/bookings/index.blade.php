@@ -6,6 +6,8 @@
 <div class="container">
     <h3 class="mb-4">Daftar Booking</h3>
 
+      <a href="{{ route('admin.dashboard') }}" class="btn btn-secondary mb-3">Kembali</a>
+
     @if(session('success'))
         <div class="alert alert-success">{{ session('success') }}</div>
     @endif

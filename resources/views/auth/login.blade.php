@@ -31,6 +31,10 @@
 
                 <button type="submit" class="btn btn-primary w-100">Login</button>
             </form>
+
+            <div class="mt-3 text-center">
+                Belum punya akun? <a href="{{ route('register') }}">Daftar di sini</a>
+            </div>
         </div>
     </div>
 </div>
