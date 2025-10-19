@@ -131,13 +131,14 @@ class PetugasController extends Controller
         return redirect()->back()->with('error', 'Booking ditolak.');
     }
 
-    // =======================
-// MANAJEMEN JADWAL REGULER
-// =======================
+    // ============================
+// Manajemen Jadwal Reguler (Petugas)
+// ============================
 public function jadwalReguler()
 {
-    $jadwals = JadwalReguler::with('room')->orderBy('created_at', 'desc')->get();
-    return view('petugas.jadwal_reguler.index', compact('jadwals'));
+
+    $jadwal = JadwalReguler::with('room')->orderBy('hari')->orderBy('start_time')->get();
+    return view('petugas.jadwal_reguler.index', compact('jadwal'));
 }
 
 public function createJadwalReguler()
@@ -149,28 +150,48 @@ public function createJadwalReguler()
 public function storeJadwalReguler(Request $request)
 {
     $request->validate([
-        'room_id' => 'required|exists:rooms,id',
-        'hari' => 'required|string|max:20',
-        'jam_mulai' => 'required|date_format:H:i',
-        'jam_selesai' => 'required|date_format:H:i|after:jam_mulai',
-        'kegiatan' => 'required|string|max:255',
+        'room_id'    => 'required|exists:rooms,id',
+        'hari'       => 'required|string',
+        'start_time' => 'required|date_format:H:i',
+        'end_time'   => 'required|date_format:H:i|after:start_time',
+        'keterangan' => 'nullable|string',
     ]);
 
     JadwalReguler::create([
-        'room_id' => $request->room_id,
-        'hari' => $request->hari,
-        'jam_mulai' => $request->jam_mulai,
-        'jam_selesai' => $request->jam_selesai,
-        'kegiatan' => $request->kegiatan,
+        'room_id'    => $request->room_id,
+        'hari'       => $request->hari,
+        'start_time' => $request->start_time,
+        'end_time'   => $request->end_time,
+        'keterangan' => $request->keterangan,
     ]);
 
-    return redirect()->route('petugas.jadwal_reguler')->with('success', 'Jadwal reguler berhasil ditambahkan.');
+    return redirect()->route('petugas.jadwal_reguler')->with('success', 'Jadwal berhasil dibuat.');
+}
+
+public function editJadwalReguler(JadwalReguler $jadwal)
+{
+    $rooms = Room::all();
+    return view('petugas.jadwal_reguler.edit', compact('jadwal', 'rooms'));
+}
+
+public function updateJadwalReguler(Request $request, JadwalReguler $jadwal)
+{
+    $request->validate([
+        'room_id'    => 'required|exists:rooms,id',
+        'hari'       => 'required|string',
+        'start_time' => 'required|date_format:H:i',
+        'end_time'   => 'required|date_format:H:i|after:start_time',
+        'keterangan' => 'nullable|string',
+    ]);
+
+    $jadwal->update($request->only('room_id','hari','start_time','end_time','keterangan'));
+
+    return redirect()->route('petugas.jadwal_reguler')->with('success', 'Jadwal berhasil diperbarui.');
 }
 
 public function deleteJadwalReguler(JadwalReguler $jadwal)
 {
     $jadwal->delete();
-    return redirect()->route('petugas.jadwal_reguler')->with('success', 'Jadwal reguler berhasil dihapus.');
+    return redirect()->route('petugas.jadwal_reguler')->with('success', 'Jadwal berhasil dihapus.');
 }
-
 }

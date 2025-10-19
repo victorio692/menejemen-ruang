@@ -4,7 +4,7 @@
 
 @section('content')
 <div class="container">
-    <h3 class="mb-4">Manajemen Booking (Petugas)</h3>
+    <h3 class="mb-4">Manajemen Booking</h3>
       <a href="{{ route('petugas.dashboard') }}" class="btn btn-secondary mb-3">Kembali</a>
 
     <table class="table table-bordered table-striped">

@@ -97,6 +97,8 @@ Route::middleware(['auth', 'role:petugas'])->group(function () {
 Route::get('/petugas/jadwal_reguler', [PetugasController::class, 'jadwalReguler'])->name('petugas.jadwal_reguler');
 Route::get('/petugas/jadwal_reguler/create', [PetugasController::class, 'createJadwalReguler'])->name('petugas.jadwal_reguler.create');
 Route::post('/petugas/jadwal_reguler', [PetugasController::class, 'storeJadwalReguler'])->name('petugas.jadwal_reguler.store');
+Route::get('/petugas/jadwal_reguler/{jadwal}/edit', [PetugasController::class, 'editJadwalReguler'])->name('petugas.jadwal_reguler.edit');
+Route::put('/petugas/jadwal_reguler/{jadwal}', [PetugasController::class, 'updateJadwalReguler'])->name('petugas.jadwal_reguler.update');
 Route::delete('/petugas/jadwal_reguler/{jadwal}', [PetugasController::class, 'deleteJadwalReguler'])->name('petugas.jadwal_reguler.delete');
 
 });

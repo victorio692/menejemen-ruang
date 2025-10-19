@@ -11,15 +11,17 @@ class JadwalReguler extends Model
 
     protected $table = 'jadwal_regulers';
     protected $primaryKey = 'id_reguler';
-    protected $fillable = ['nama_reguler', 'id_room', 'id_user'];
+    protected $fillable = [
+        'id_room',
+        'kelas',
+        'hari',
+        'start_time',
+        'end_time',
+        'keterangan',
+    ];
 
     public function room()
     {
         return $this->belongsTo(Room::class, 'id_room');
-    }
-
-    public function user()
-    {
-        return $this->belongsTo(User::class, 'id_user');
     }
 }

@@ -144,9 +144,15 @@ public function index()
 
 public function jadwalReguler()
 {
-    $jadwal = JadwalReguler::with('room')->get();
+    $jadwal = JadwalReguler::with('room')
+        ->orderBy('kelas')
+        ->orderBy('hari')
+        ->orderBy('start_time')
+        ->get();
+
     return view('admin.jadwal_reguler.index', compact('jadwal'));
 }
+
 
 
 public function createJadwalReguler()
