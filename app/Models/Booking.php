@@ -14,6 +14,7 @@ class Booking extends Model
     public $timestamps = true;           // kalau tidak pakai timestamps set false
 
     protected $fillable = [
+        'user_id',
         'id_user',
         'id_room',
         'tanggal_mulai',
