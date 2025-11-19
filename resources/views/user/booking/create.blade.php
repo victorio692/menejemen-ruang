@@ -4,85 +4,401 @@
 
 @section('content')
     <div class="container-fluid px-4 py-4">
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <h3 class="fw-bold">Buat Booking Baru</h3>
-            <a href="{{ route('user.dashboard') }}" class="btn btn-secondary">
-                <i class="bi bi-arrow-left-circle me-1"></i> Kembali ke Dashboard
-            </a>
-        </div>
-
-        @if ($errors->any())
-            <div class="alert alert-danger">
-                <ul class="mb-0">
-                    @foreach ($errors->all() as $error)
-                        <li>{{ $error }}</li>
-                    @endforeach
-                </ul>
+        <!-- NOTIFICATION SECTION - TAMBAHKAN INI -->
+        @if(session('success'))
+            <div class="alert alert-success alert-dismissible fade show mb-4" role="alert">
+                <div class="d-flex align-items-center">
+                    <i class="bi bi-check-circle-fill me-2"></i>
+                    <div class="flex-grow-1">
+                        {{ session('success') }}
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
             </div>
         @endif
 
+        @if(session('error'))
+            <div class="alert alert-danger alert-dismissible fade show mb-4" role="alert">
+                <div class="d-flex align-items-center">
+                    <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                    <div class="flex-grow-1">
+                        {{ session('error') }}
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            </div>
+        @endif
+
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h3 class="fw-bold">Buat Booking Baru</h3>
+            <a href="{{ route('user.booking.index') }}" class="btn btn-secondary">
+                <i class="bi bi-arrow-left-circle me-1"></i> Kembali
+            </a>
+        </div>
+
         <div class="card shadow-sm border-0 rounded-3 p-4">
-            <form action="{{ route('user.booking.store') }}" method="POST">
+            <form action="{{ route('user.booking.store') }}" method="POST" id="bookingForm">
                 @csrf
+                
+                <!-- Room Selection -->
                 <div class="mb-3">
-                    <label for="room_id" class="form-label fw-semibold">Pilih Ruangan</label>
+                    <label for="room_id" class="form-label fw-semibold">Pilih Ruangan *</label>
                     <select name="room_id" id="room_id" class="form-select" required>
                         <option value="">-- Pilih Ruangan --</option>
                         @foreach ($rooms as $room)
-                            <option value="{{ $room->id }}">{{ $room->name }}</option>
+                            <option value="{{ $room->id }}" 
+                                {{ old('room_id') == $room->id ? 'selected' : '' }}>
+                                {{ $room->name }}
+                            </option>
                         @endforeach
                     </select>
                 </div>
 
-                <div class="row">
-                    <div class="col-md-6 mb-3">
-                        <label for="start_time" class="form-label fw-semibold">Waktu Mulai</label>
-                        <input type="datetime-local" name="start_time" id="start_time" class="form-control" required>
-                    </div>
-                    <div class="col-md-6 mb-3">
-                        <label for="end_time" class="form-label fw-semibold">Waktu Selesai</label>
-                        <input type="datetime-local" name="end_time" id="end_time" class="form-control" required>
-                    </div>
-                </div>
-
+                <!-- Date Selection - HANYA BISA H-2 -->
                 <div class="mb-3">
-                    <label for="purpose" class="form-label fw-semibold">Tujuan / Keterangan</label>
-                    <textarea name="purpose" id="purpose" class="form-control" rows="3"
-                        placeholder="Tuliskan alasan atau keperluan peminjaman ruangan..."></textarea>
+                    <label for="booking_date" class="form-label fw-semibold">Tanggal Booking *</label>
+                    <input type="date" name="booking_date" id="booking_date" class="form-control" required 
+                           min="{{ date('Y-m-d', strtotime('+2 days')) }}"
+                           max="{{ date('Y-m-d', strtotime('+30 days')) }}"
+                           value="{{ old('booking_date') }}">
+                    <small class="text-muted">Booking hanya bisa dilakukan minimal H-2 (besok lusa)</small>
                 </div>
 
-                <div class="text-end">
-                    <button type="submit" class="btn btn-success px-4">
-                        <i class="bi bi-check-circle me-1"></i> Buat Booking
+                <!-- Session Selection - 10 SESI @ 45 MENIT -->
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Pilih Sesi *</label>
+                    <div id="sessionContainer">
+                        <small class="text-muted d-block mb-2">Pilih satu atau beberapa sesi (45 menit per sesi):</small>
+                        <div class="row" id="sessionGrid">
+                            <!-- Sessions will be generated by JavaScript -->
+                        </div>
+                    </div>
+                    <input type="hidden" name="selected_sessions" id="selectedSessions" value="{{ old('selected_sessions') }}">
+                </div>
+
+                <!-- Calculated Time Display -->
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Waktu Booking:</label>
+                    <div id="timeDisplay" class="p-3 bg-light rounded">
+                        <small class="text-muted">Pilih tanggal dan sesi untuk melihat waktu booking</small>
+                    </div>
+                    <input type="hidden" name="start_time" id="startTime">
+                    <input type="hidden" name="end_time" id="endTime">
+                </div>
+
+                <!-- Purpose -->
+                <div class="mb-3">
+                    <label for="purpose" class="form-label fw-semibold">Tujuan *</label>
+                    <textarea name="purpose" id="purpose" class="form-control" placeholder="Tujuan booking" rows="3" required>{{ old('purpose') }}</textarea>
+                </div>
+
+                <div class="d-flex flex-column flex-sm-row gap-2 gap-sm-3 justify-content-end">
+                    <a href="{{ route('user.booking.index') }}" class="btn btn-secondary">
+                        <i class="bi bi-arrow-left me-2"></i> Kembali
+                    </a>
+                    <button type="submit" class="btn btn-success btn-lg" id="submitBtn">
+                        <i class="bi bi-check-circle me-2"></i> Buat Booking
                     </button>
                 </div>
             </form>
         </div>
     </div>
 
-    {{-- Tambahan gaya agar serasi --}}
     <style>
-        .card {
-            background-color: #ffffff;
-            transition: all 0.2s ease-in-out;
+        .session-btn {
+            margin: 2px;
+            padding: 8px 12px;
+            border: 2px solid #dee2e6;
+            border-radius: 8px;
+            background: white;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 0.9em;
         }
-
-        .card:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        .session-btn:hover {
+            border-color: #6c757d;
         }
-
-        label.form-label {
-            color: #495057;
+        .session-btn.selected {
+            background: #198754;
+            color: white;
+            border-color: #198754;
         }
-
-        .btn-secondary {
-            background-color: #6c757d;
+        .session-btn.disabled {
+            background: #f8f9fa;
+            color: #6c757d;
+            cursor: not-allowed;
+            border-color: #dee2e6;
+        }
+        .time-slot {
+            font-family: monospace;
+            background: #e9ecef;
+            padding: 4px 8px;
+            border-radius: 4px;
+            margin: 2px;
+        }
+        .alert {
+            border-radius: 10px;
             border: none;
-        }
-
-        .btn-secondary:hover {
-            background-color: #5a6268;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
         }
     </style>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const roomSelect = document.getElementById('room_id');
+            const bookingDate = document.getElementById('booking_date');
+            const sessionGrid = document.getElementById('sessionGrid');
+            const selectedSessions = document.getElementById('selectedSessions');
+            const startTime = document.getElementById('startTime');
+            const endTime = document.getElementById('endTime');
+            const timeDisplay = document.getElementById('timeDisplay');
+            const submitBtn = document.getElementById('submitBtn');
+
+            // Session configuration
+            const SESSION_DURATION = 45; // minutes
+            const SESSIONS_PER_DAY = 10;
+            const START_HOUR = 7; // 07:00 AM
+            const sessions = [];
+            
+            let disabledSessions = {
+                booked: [],
+                regularSchedule: []
+            };
+
+            // Generate session times
+            for (let i = 0; i < SESSIONS_PER_DAY; i++) {
+                const startMinutes = START_HOUR * 60 + i * SESSION_DURATION;
+                const endMinutes = startMinutes + SESSION_DURATION;
+                
+                const startHour = Math.floor(startMinutes / 60);
+                const startMinute = startMinutes % 60;
+                const endHour = Math.floor(endMinutes / 60);
+                const endMinute = endMinutes % 60;
+
+                sessions.push({
+                    session: i + 1,
+                    start: `${startHour.toString().padStart(2, '0')}:${startMinute.toString().padStart(2, '0')}`,
+                    end: `${endHour.toString().padStart(2, '0')}:${endMinute.toString().padStart(2, '0')}`,
+                    selected: false
+                });
+            }
+
+            // Check schedule availability
+            async function checkScheduleAvailability() {
+                if (!roomSelect.value || !bookingDate.value) {
+                    disabledSessions = { booked: [], regularSchedule: [] };
+                    initializeSessions();
+                    return;
+                }
+
+                try {
+                    const response = await fetch(`/api/check-schedule?room_id=${roomSelect.value}&booking_date=${bookingDate.value}`);
+                    const data = await response.json();
+                    
+                    disabledSessions = {
+                        booked: data.booked_sessions || [],
+                        regularSchedule: data.regular_schedule_sessions || []
+                    };
+                    
+                    initializeSessions();
+                } catch (error) {
+                    console.error('Error checking schedule:', error);
+                }
+            }
+
+            // Initialize sessions grid
+            function initializeSessions() {
+                sessionGrid.innerHTML = '';
+                
+                // Get previously selected sessions from old input
+                let oldSelectedSessions = [];
+                try {
+                    oldSelectedSessions = JSON.parse(selectedSessions.value || '[]');
+                } catch (e) {
+                    oldSelectedSessions = [];
+                }
+
+                sessions.forEach((session, index) => {
+                    const col = document.createElement('div');
+                    col.className = 'col-6 col-md-4 col-lg-3 mb-2';
+                    
+                    const btn = document.createElement('button');
+                    btn.type = 'button';
+                    btn.className = 'session-btn w-100';
+                    btn.dataset.index = index;
+                    
+                    const isBooked = disabledSessions.booked.includes(session.session);
+                    const isRegularSchedule = disabledSessions.regularSchedule.includes(session.session);
+                    const isDisabled = isBooked || isRegularSchedule;
+                    
+                    // Check if this session was previously selected
+                    const wasSelected = oldSelectedSessions.includes(session.session);
+                    if (wasSelected && !isDisabled) {
+                        sessions[index].selected = true;
+                    }
+                    
+                    let statusHtml = '';
+                    if (isBooked) {
+                        statusHtml = ' <span class="badge bg-danger ms-1" title="Sudah dibooking">Booked</span>';
+                        btn.classList.add('disabled');
+                    } else if (isRegularSchedule) {
+                        statusHtml = ' <span class="badge bg-warning text-dark ms-1" title="Jadwal belajar reguler">Kelas</span>';
+                        btn.classList.add('disabled');
+                    }
+                    
+                    btn.innerHTML = `
+                        <div><strong>Sesi ${session.session}</strong>${statusHtml}</div>
+                        <small>${session.start} - ${session.end}</small>
+                    `;
+                    
+                    // Set selected state visually
+                    if (sessions[index].selected) {
+                        btn.classList.add('selected');
+                    }
+                    
+                    btn.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        if (!this.classList.contains('disabled')) {
+                            toggleSession(index);
+                        }
+                    });
+                    
+                    col.appendChild(btn);
+                    sessionGrid.appendChild(col);
+                });
+                
+                updateSelectedSessions();
+                updateTimeDisplay();
+            }
+
+            // Toggle session selection
+            function toggleSession(index) {
+                sessions[index].selected = !sessions[index].selected;
+                const btn = document.querySelector(`.session-btn[data-index="${index}"]`);
+                
+                if (sessions[index].selected) {
+                    btn.classList.add('selected');
+                } else {
+                    btn.classList.remove('selected');
+                }
+                
+                updateSelectedSessions();
+                updateTimeDisplay();
+            }
+
+            // Update hidden input with selected sessions
+            function updateSelectedSessions() {
+                const selected = sessions.filter(s => s.selected).map(s => s.session);
+                selectedSessions.value = JSON.stringify(selected);
+                
+                // Enable/disable submit button
+                submitBtn.disabled = selected.length === 0;
+            }
+
+            // Update time display
+            function updateTimeDisplay() {
+                const selected = sessions.filter(s => s.selected);
+                
+                if (selected.length === 0) {
+                    timeDisplay.innerHTML = '<small class="text-muted">Pilih tanggal dan sesi untuk melihat waktu booking</small>';
+                    startTime.value = '';
+                    endTime.value = '';
+                    return;
+                }
+
+                const selectedSessionsSorted = selected.sort((a, b) => a.session - b.session);
+                const firstSession = selectedSessionsSorted[0];
+                const lastSession = selectedSessionsSorted[selectedSessionsSorted.length - 1];
+                const bookingDateVal = bookingDate.value;
+
+                if (!bookingDateVal) {
+                    timeDisplay.innerHTML = '<small class="text-muted">Pilih tanggal terlebih dahulu</small>';
+                    return;
+                }
+
+                const startDateTime = `${bookingDateVal} ${firstSession.start}:00`;
+                const endDateTime = `${bookingDateVal} ${lastSession.end}:00`;
+
+                startTime.value = startDateTime;
+                endTime.value = endDateTime;
+
+                const sessionList = selectedSessionsSorted.map(s => 
+                    `<span class="time-slot">S${s.session} (${s.start}-${s.end})</span>`
+                ).join('');
+
+                timeDisplay.innerHTML = `
+                    <div class="mb-2">
+                        <strong>Total Sesi:</strong> ${selected.length} sesi (${selected.length * 45} menit)
+                    </div>
+                    <div class="mb-2">
+                        <strong>Mulai:</strong> ${formatDateTime(startDateTime)}
+                    </div>
+                    <div class="mb-2">
+                        <strong>Selesai:</strong> ${formatDateTime(endDateTime)}
+                    </div>
+                    <div>
+                        <strong>Sesi Terpilih:</strong><br>
+                        <div class="mt-1">${sessionList}</div>
+                    </div>
+                `;
+            }
+
+            // Format date time for display
+            function formatDateTime(dateTimeStr) {
+                const date = new Date(dateTimeStr);
+                return date.toLocaleDateString('id-ID', {
+                    weekday: 'long',
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric'
+                }) + ' ' + date.toLocaleTimeString('id-ID', {
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+            }
+
+            // Initialize on page load
+            initializeSessions();
+
+            // Event listeners
+            roomSelect.addEventListener('change', checkScheduleAvailability);
+            bookingDate.addEventListener('change', function() {
+                checkScheduleAvailability();
+                updateTimeDisplay();
+            });
+
+            // Form validation
+            document.getElementById('bookingForm').addEventListener('submit', function(e) {
+                const selected = JSON.parse(selectedSessions.value || '[]');
+                if (selected.length === 0) {
+                    e.preventDefault();
+                    alert('Pilih minimal satu sesi!');
+                    return;
+                }
+
+                if (!bookingDate.value) {
+                    e.preventDefault();
+                    alert('Pilih tanggal booking!');
+                    return;
+                }
+
+                // Validate H-2 rule
+                const selectedDate = new Date(bookingDate.value);
+                const minDate = new Date();
+                minDate.setDate(minDate.getDate() + 2);
+                minDate.setHours(0, 0, 0, 0);
+
+                if (selectedDate < minDate) {
+                    e.preventDefault();
+                    alert('Booking hanya bisa dilakukan minimal H-2 (besok lusa)!');
+                    return;
+                }
+            });
+
+            // Auto-check schedule if room and date are already selected from old input
+            if (roomSelect.value && bookingDate.value) {
+                checkScheduleAvailability();
+            }
+        });
+    </script>
 @endsection

@@ -10,9 +10,9 @@ class JadwalReguler extends Model
     use HasFactory;
 
     protected $table = 'jadwal_regulers';
-    protected $primaryKey = 'id_reguler';
     protected $fillable = [
-        'id_room',
+        'room_id',
+        'class_id',
         'kelas',
         'hari',
         'start_time',
@@ -22,6 +22,11 @@ class JadwalReguler extends Model
 
     public function room()
     {
-        return $this->belongsTo(Room::class, 'id_room');
+        return $this->belongsTo(Room::class, 'room_id');
+    }
+
+    public function class()
+    {
+        return $this->belongsTo(ClassModel::class, 'class_id');
     }
 }

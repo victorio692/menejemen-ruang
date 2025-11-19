@@ -20,7 +20,9 @@ class DatabaseSeeder extends Seeder
 
         // Panggil seeder lain
         $this->call([
-            JadwalRegularSeeder::class,
+            RoomSeeder::class,
+            ClassSeeder::class,
+            JadwalRegulerSeeder::class,
         ]);
     }
 }

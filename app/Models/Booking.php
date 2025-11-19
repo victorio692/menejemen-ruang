@@ -4,34 +4,34 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Booking extends Model
 {
-    use HasFactory;
+    use HasFactory, SoftDeletes;
 
-    protected $table = 'bookings';       // pastikan nama tabel benar
-    protected $primaryKey = 'id_booking';
-    public $timestamps = true;           // kalau tidak pakai timestamps set false
-
+    
     protected $fillable = [
         'user_id',
-        'id_user',
-        'id_room',
-        'tanggal_mulai',
-        'tanggal_selesai',
+        'room_id',
+        'start_time', 
+        'end_time',
+        'purpose',
         'status',
-        'keterangan'
+        'approved_at',
+        'approved_by',
+        'rejection_reason',
     ];
 
     // Relasi ke User
     public function user()
     {
-        return $this->belongsTo(User::class, 'id_user', 'id');
+        return $this->belongsTo(User::class);
     }
 
     // Relasi ke Room
     public function room()
     {
-        return $this->belongsTo(Room::class, 'id_room', 'id_room');
+        return $this->belongsTo(Room::class);
     }
 }

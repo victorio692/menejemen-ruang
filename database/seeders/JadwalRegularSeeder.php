@@ -7,25 +7,27 @@ use Illuminate\Support\Facades\DB;
 
 class JadwalRegularSeeder extends Seeder
 {
-    /**
-     * Run the database seeds.
-     */
     public function run(): void
     {
-        DB::table('jadwal_regular')->insert([
+      DB::table('jadwal_regulers')->insert([
+
             [
-                'id_room' => 1,
+                'room_id' => 1,
                 'hari' => 'Senin',
-                'jam_mulai' => '08:00:00',
-                'jam_selesai' => '10:00:00',
+                'start_time' => '08:00:00',
+                'end_time' => '10:00:00',
                 'keterangan' => 'Matematika',
+                'created_at' => now(),
+                'updated_at' => now(),
             ],
             [
-                'id_room' => 1,
+                'room_id' => 1,
                 'hari' => 'Rabu',
-                'jam_mulai' => '13:00:00',
-                'jam_selesai' => '15:00:00',
+                'start_time' => '13:00:00',
+                'end_time' => '15:00:00',
                 'keterangan' => 'Bahasa Inggris',
+                'created_at' => now(),
+                'updated_at' => now(),
             ],
         ]);
     }

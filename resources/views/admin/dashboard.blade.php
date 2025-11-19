@@ -11,6 +11,7 @@
             padding: 25px;
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
             transition: transform 0.2s ease;
+            text-align: center;
         }
 
         .dashboard-card:hover {
@@ -60,65 +61,138 @@
 
         <div class="row g-3">
             <div class="col-md-3">
-                <div class="dashboard-card bg-purple text-center">
+                <div class="dashboard-card bg-purple">
                     <h5>Total Users</h5>
                     <h2>{{ $usersCount }}</h2>
-
                 </div>
             </div>
             <div class="col-md-3">
-                <div class="dashboard-card bg-blue text-center">
+                <div class="dashboard-card bg-blue">
                     <h5>Total Rooms</h5>
                     <h2>{{ $roomsCount }}</h2>
-
                 </div>
             </div>
             <div class="col-md-3">
-                <div class="dashboard-card bg-green text-center">
+                <div class="dashboard-card bg-green">
                     <h5>Total Bookings</h5>
                     <h2>{{ $bookingsCount }}</h2>
-
                 </div>
             </div>
             <div class="col-md-3">
-                <div class="dashboard-card bg-orange text-center">
+                <div class="dashboard-card bg-orange">
                     <h5>Pending Bookings</h5>
                     <h2>{{ $pendingBookings }}</h2>
-
                 </div>
             </div>
         </div>
 
-        <!-- Tombol Manajemen dipindah ke atas tabel -->
-        <div class="mt-4 d-flex gap-2">
-            <a href="{{ route('admin.petugas') }}" class="btn btn-primary">Manajemen User</a>
-            <a href="{{ route('admin.rooms') }}" class="btn btn-success">Manajemen Room</a>
-            <a href="{{ route('admin.bookings') }}" class="btn btn-warning text-dark">Manajemen Booking</a>
-            <a href="{{ route('admin.jadwal_reguler') }}" class="btn btn-info text-white">Manajemen Jadwal Reguler</a>
-        </div>
-
-        <div class="card mt-3 shadow-sm border-0 rounded-3">
+        <!-- Peminjaman Menunggu Verifikasi -->
+        <div class="card mt-4 shadow-sm border-0 rounded-3">
             <div class="card-header bg-white border-0">
-                <h5 class="fw-bold">Peminjaman Menunggu Verifikasi</h5>
+                <h5 class="fw-bold mb-0">Peminjaman Menunggu Verifikasi</h5>
             </div>
-            <div class="card-body">
-                <table class="table align-middle">
-                    <thead class="table-light">
-                        <tr>
-                            <th>Name</th>
-                            <th>Email</th>
-                            <th>User Type</th>
-                            <th>Joined</th>
-                            <th>Status</th>
-                        </tr>
-                    </thead>
-
-                </table>
+            <div class="card-body p-0">
+                @if($pendingBookingList->count() > 0)
+                    <div class="table-responsive">
+                        <table class="table align-middle mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>#</th>
+                                    <th>User</th>
+                                    <th>Ruangan</th>
+                                    <th>Tanggal Mulai</th>
+                                    <th>Tanggal Selesai</th>
+                                    <th>Tujuan</th>
+                                    <th>Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach($pendingBookingList as $booking)
+                                <tr>
+                                    <td>{{ $loop->iteration }}</td>
+                                    <td>{{ $booking->user->name }}</td>
+                                    <td>{{ $booking->room->name }}</td>
+                                    <td>{{ \Carbon\Carbon::parse($booking->start_time)->format('d M Y H:i') }}</td>
+                                    <td>{{ \Carbon\Carbon::parse($booking->end_time)->format('d M Y H:i') }}</td>
+                                    <td>{{ Str::limit($booking->purpose, 50) }}</td>
+                                    <td>
+                                        <div class="d-flex gap-1">
+                                            <form action="{{ route('admin.booking.approve', $booking->id) }}" method="POST">
+                                                @csrf
+                                                <button type="submit" class="btn btn-success btn-sm" title="Setujui">
+                                                    <i class="bi bi-check-lg"></i>
+                                                </button>
+                                            </form>
+                                            <form action="{{ route('admin.booking.reject', $booking->id) }}" method="POST">
+                                                @csrf
+                                                <button type="submit" class="btn btn-danger btn-sm" title="Tolak">
+                                                    <i class="bi bi-x-lg"></i>
+                                                </button>
+                                            </form>
+                                            <a href="{{ route('admin.bookings.show', $booking->id) }}" class="btn btn-info btn-sm" title="Detail">
+                                                <i class="bi bi-eye"></i>
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                @else
+                    <div class="text-center py-4">
+                        <i class="bi bi-check-circle text-success" style="font-size: 3rem;"></i>
+                        <p class="mt-2 text-muted">Tidak ada peminjaman menunggu verifikasi</p>
+                    </div>
+                @endif
             </div>
         </div>
+
+        <!-- Statistik Booking per Status -->
+        <div class="row mt-4">
+            <div class="col-md-8">
+                <div class="card shadow-sm border-0 rounded-3">
+                    <div class="card-header bg-white border-0">
+                        <h5 class="fw-bold mb-0">Statistik Booking</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row text-center">
+                            <div class="col-md-4">
+                                <div class="border-end">
+                                    <h3 class="text-success">{{ $approvedBookings ?? 0 }}</h3>
+                                    <p class="text-muted mb-0">Disetujui</p>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="border-end">
+                                    <h3 class="text-warning">{{ $pendingBookings }}</h3>
+                                    <p class="text-muted mb-0">Pending</p>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div>
+                                    <h3 class="text-danger">{{ $rejectedBookings ?? 0 }}</h3>
+                                    <p class="text-muted mb-0">Ditolak</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
 
         @if (session('success'))
-            <div class="alert alert-success mt-3">{{ session('success') }}</div>
+            <div class="alert alert-success mt-3 alert-dismissible fade show" role="alert">
+                <i class="bi bi-check-circle me-2"></i>{{ session('success') }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        @endif
+
+        @if (session('error'))
+            <div class="alert alert-danger mt-3 alert-dismissible fade show" role="alert">
+                <i class="bi bi-exclamation-circle me-2"></i>{{ session('error') }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
         @endif
     </div>
 @endsection

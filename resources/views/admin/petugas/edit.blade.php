@@ -3,8 +3,13 @@
 @section('title', 'Edit Petugas')
 
 @section('content')
+@extends('layouts.app')
+
+@section('title', 'Edit User')
+
+@section('content')
 <div class="container">
-    <h3 class="mb-4">Edit Petugas</h3>
+    <h3 class="mb-4">Edit User</h3>
 
     <form action="{{ route('admin.petugas.update', $user->id) }}" method="POST">
         @csrf
@@ -25,8 +30,18 @@
             <input type="password" name="password" class="form-control">
         </div>
 
+        <div class="mb-3">
+            <label>Role</label>
+            <select name="role" class="form-control" required>
+                <option value="petugas" {{ $user->role === 'petugas' ? 'selected' : '' }}>Petugas</option>
+                <option value="user" {{ $user->role === 'user' ? 'selected' : '' }}>User / Peminjam</option>
+            </select>
+        </div>
+
         <button type="submit" class="btn btn-primary">Update</button>
         <a href="{{ route('admin.petugas') }}" class="btn btn-secondary">Kembali</a>
     </form>
 </div>
+@endsection
+
 @endsection
